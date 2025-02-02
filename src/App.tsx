@@ -1,10 +1,10 @@
-import { Box, Button, TextField } from "@mui/material";
-import { useMemo, useState } from "react";
-import StarOutlineIcon from "@mui/icons-material/StarOutline";
-import GradeIcon from "@mui/icons-material/Grade";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Phrase } from "./interface";
 import Fuse from "fuse.js";
+import { CardPhrase, CreatePhrase, RoundedTextField } from "./components";
+import styled from "@emotion/styled";
+import { Button, Tab, Tabs } from "@mui/material";
+import { mockPhrases } from "./utilities";
 
 const INITIAL_STATE = {
     id: 0,
@@ -12,12 +12,62 @@ const INITIAL_STATE = {
     isFavorite: false,
 };
 
-const options = { keys: ["phrase"], threshold: 0.3 };
+const options = {
+    keys: ["phrase"],
+    threshold: 0.3,
+    includeScore: true,
+    ignoreLocation: true,
+};
+
+interface StyledTabProps {
+    label: string;
+}
+
+const AntTabs = styled(Tabs)({
+    borderBottom: "1px solid #e8e8e8",
+    "& .MuiTabs-indicator": {
+        backgroundColor: "#1890ff",
+    },
+});
+
+const AntTab = styled((props: StyledTabProps) => (
+    <Tab disableRipple {...props} />
+))(({ theme }) => ({
+    textTransform: "none",
+    minWidth: 0,
+    color: "rgba(0, 0, 0, 0.85)",
+    fontFamily: [
+        "-apple-system",
+        "BlinkMacSystemFont",
+        '"Segoe UI"',
+        "Roboto",
+        '"Helvetica Neue"',
+        "Arial",
+        "sans-serif",
+        '"Apple Color Emoji"',
+        '"Segoe UI Emoji"',
+        '"Segoe UI Symbol"',
+    ].join(","),
+    "&:hover": {
+        color: "#40a9ff",
+        opacity: 1,
+    },
+    "&.Mui-selected": {
+        color: "#1890ff",
+    },
+    "&.Mui-focusVisible": {
+        backgroundColor: "#d1eaff",
+    },
+}));
 
 function App() {
     const [newPhrase, setNewPhrase] = useState<Phrase>(INITIAL_STATE);
-    const [phrases, setPhrases] = useState<Phrase[]>([]);
+    const [phrases, setPhrases] = useState<Phrase[]>(mockPhrases);
     const [query, setQuery] = useState("");
+    const [tabValue, setTabValue] = useState(0);
+    const [visiblePhrases, setVisiblePhrases] = useState(4);
+    const [isResetting, setIsResetting] = useState(false); // 🔥 Evita carga automática al resetear
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
     const fuse = useMemo(() => new Fuse(phrases, options), [phrases]);
 
@@ -25,6 +75,12 @@ function App() {
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         setNewPhrase({ ...newPhrase, phrase: e.target.value });
+    };
+
+    const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
+        setTabValue(newValue);
+        setNewPhrase(INITIAL_STATE);
+        setQuery("");
     };
 
     const handleAddPhrase = () => {
@@ -50,78 +106,102 @@ function App() {
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setQuery(e.target.value);
+        setVisiblePhrases(4);
     };
 
     const results = query
-    ? fuse.search(query).map(res => res.item).sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite))
-    : [...phrases].sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite));
+        ? fuse
+              .search(query)
+              .map((res) => res.item)
+              .sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite))
+        : [...phrases].sort(
+              (a, b) => Number(b.isFavorite) - Number(a.isFavorite)
+          );
+
+    const visibleResults = results.slice(0, visiblePhrases);
+
+    useEffect(() => {
+        if (!loadMoreRef.current || isResetting) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setTimeout(() => {
+                        setVisiblePhrases((prev) => prev + 3);
+                    }, 1000);
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        observer.observe(loadMoreRef.current);
+
+        return () => observer.disconnect();
+    }, [visiblePhrases, results.length, isResetting]);
 
     return (
-        <main className="h-screen w-screen flex flex-col gap-[4rem] p-8">
-            <h1
-                className="flex items-center justify-center max-sm:text-2xl max-md:text-3xl max-lg:text-4xl lg:text-5xl underline"
-            >
-                Escriba la frase que quiera guardar
-            </h1>
-            <section className="flex max-sm:flex-col max-md:items-center sm:flex-row justify-center gap-2 text-center items-center">
-                <TextField
-                    className="sm:w-1/2 max-sm:w-2/3"
-                    id="phrase"
-                    value={newPhrase.phrase}
-                    onChange={(e) => handleChange(e)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault(); // Evita salto de línea en multiline
-                          handleAddPhrase();
-                      }
-                  }} 
-                    placeholder="En la noche de la noche..."
-                    maxRows={3}
-                    multiline
-                />
-                <Button
-                    className="h-fit "
-                    onClick={handleAddPhrase}
-                    disabled={!newPhrase.phrase}
-                    variant="contained"
+        <main className="h-full w-full min-w-[400px] flex flex-col items-center gap-[3rem] p-8">
+            <div className="flex flex-col items-center gap-4">
+                <h1 className="flex items-center justify-center max-sm:text-2xl max-md:text-3xl max-lg:text-4xl lg:text-5xl">
+                    Bienvenido a la biblioteca de frases!
+                </h1>
+                <AntTabs
+                    className="w-fit"
+                    value={tabValue}
+                    onChange={handleChangeTab}
+                    aria-label="ant example"
                 >
-                    Guardar
-                </Button>
-            </section>
-            <input
-                type="text"
-                value={query}
-                onChange={handleSearch}
-                placeholder="Buscar usuario..."
-                className="border p-2"
-            />
-            <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
-                {results.map((phrase, index) => (
-                    <Box
+                    <AntTab label="Crear" />
+                    <AntTab label="Buscar" />
+                </AntTabs>
+            </div>
+            {tabValue ? (
+                <RoundedTextField
+                    className="w-full max-w-[900px]"
+                    type="text"
+                    value={query}
+                    onChange={handleSearch}
+                    placeholder="Buscar en la frase..."
+                />
+            ) : (
+                <CreatePhrase
+                    newPhrase={newPhrase}
+                    handleAddPhrase={handleAddPhrase}
+                    handleChange={handleChange}
+                />
+            )}
+
+            <section className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
+                {visibleResults.map((phrase, index) => (
+                    <CardPhrase
                         key={index}
-                        className="min-w-[200px] flex flex-col gap-2 border-2 border-black p-4 rounded-2xl"
-                    >
-                        <div className="flex gap-2 justify-end">
-                            {phrase.isFavorite ? (
-                                <GradeIcon
-                                    className="cursor-pointer text-yellow-400 hover:text-yellow-600 transition-colors duration-300"
-                                    onClick={() => handleFavoritePhrase(phrase.id)}
-                                />
-                            ) : (
-                                <StarOutlineIcon
-                                    className="cursor-pointer text-yellow-600 hover:text-yellow-400 transition-colors duration-300"
-                                    onClick={() => handleFavoritePhrase(phrase.id)}
-                                />
-                            )}
-                            <DeleteOutlineIcon
-                                className="cursor-pointer text-red-500 hover:text-red-400 transition-colors duration-300"
-                                onClick={() => handleDeletePhrase(phrase.id)}
-                            />
-                        </div>
-                        <div>{phrase.phrase}</div>
-                    </Box>
+                        phrase={phrase}
+                        handleFavoritePhrase={handleFavoritePhrase}
+                        handleDeletePhrase={handleDeletePhrase}
+                    />
                 ))}
             </section>
+
+            {visiblePhrases < results.length ? (
+                <div
+                    ref={loadMoreRef}
+                    className="h-10 w-full text-center p-4 flex items-center justify-center"
+                >
+                    Cargando más frases...
+                </div>
+            ) : (
+                <Button
+                    variant="text"
+                    onClick={() => {
+                        setIsResetting(true); // 🚀 Bloquea la carga infinita momentáneamente
+                        setVisiblePhrases(4); // 🔥 Reinicia las frases visibles
+                        window.scrollTo({ top: 0, behavior: "smooth" }); // 🔥 Hace scroll al inicio
+                        setTimeout(() => setIsResetting(false), 1000); // ⏳ Reactiva después de 1s
+                    }}
+                >
+                    Mostrar menos
+                </Button>
+            )}
         </main>
     );
 }
