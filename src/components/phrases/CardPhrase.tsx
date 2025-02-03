@@ -43,6 +43,7 @@ const CardPhrase = ({
     return (
         <>
             <Card className={`min-w-[200px] !rounded-2xl hover:cursor-pointer hover:!bg-gray-100 active:scale-95 !transition-all !duration-300 ${phrase.isFavorite ? "!border-2 !border-yellow-400 !shadow-none" : ""}`} onClick={handleOpen}>
+                <div className="relative">
                     <CardMedia
                         component="img"
                         alt="background"
@@ -53,11 +54,17 @@ const CardPhrase = ({
                             opacity: 0.7,
                         }}
                     />
+                    {
+                    phrase.isFavorite && <GradeIcon className="!absolute !top-[10px] !right-[15px] bg- cursor-pointer text-yellow-400 hover:text-yellow-600 transition-colors duration-300" />
+                    }
+                    
+                </div>
                     <CardContent className="flex flex-col gap-2 p-4">
                         <div className="line-clamp-3 text-start">
                             {phrase.phrase}
                         </div>
                     </CardContent>
+                        
             </Card>
             <Modal
                 open={open}

@@ -27,7 +27,7 @@ const CreatePhrase = ({ newPhrase, handleAddPhrase, handleChange, inputRef }: Cr
                         handleAddPhrase();
                     }
                 }}
-                placeholder="En la noche de la noche..."
+                placeholder="Presione Enter para guardar la frase"
                 multiline
             />
         </section>
