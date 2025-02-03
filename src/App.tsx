@@ -148,7 +148,7 @@ function App() {
     };
 
     return (
-        <main className="h-full w-full flex flex-col items-center max-sm:gap-[1rem] sm:gap-[3rem] text-center max-sm:!p-6 sm:p-8">
+        <main className="!bg-red-700 h-full w-full flex flex-col items-center max-sm:gap-[1rem] sm:gap-[3rem] text-center max-sm:!p-6 sm:p-8">
             <div ref={topRef} />
             <div className="flex flex-col items-center gap-4">
                 <h1 className="flex items-center justify-center max-sm:text-2xl max-md:text-3xl max-lg:text-4xl lg:text-5xl">
