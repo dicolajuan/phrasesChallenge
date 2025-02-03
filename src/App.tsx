@@ -1,125 +1,116 @@
-import { useMemo, useState, useEffect, useRef } from "react";
-import { Phrase } from "./interface";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import Fuse from "fuse.js";
+import { Button, Tooltip } from "@mui/material";
+import BorderColorIcon from "@mui/icons-material/BorderColor";
+
+import { Phrase } from "./interface";
 import { CardPhrase, CreatePhrase, RoundedTextField } from "./components";
-import styled from "@emotion/styled";
-import { Button, Tab, Tabs } from "@mui/material";
 import { mockPhrases } from "./utilities";
 
-const INITIAL_STATE = {
+const INITIAL_STATE: Phrase = {
     id: 0,
     phrase: "",
     isFavorite: false,
 };
 
-const options = {
+const fuseOptions = {
     keys: ["phrase"],
     threshold: 0.3,
     includeScore: true,
     ignoreLocation: true,
 };
 
-interface StyledTabProps {
-    label: string;
-}
-
-const AntTabs = styled(Tabs)({
-    borderBottom: "1px solid #e8e8e8",
-    "& .MuiTabs-indicator": {
-        backgroundColor: "#1890ff",
-    },
-});
-
-const AntTab = styled((props: StyledTabProps) => (
-    <Tab disableRipple {...props} />
-))(({ theme }) => ({
-    textTransform: "none",
-    minWidth: 0,
-    color: "rgba(0, 0, 0, 0.85)",
-    fontFamily: [
-        "-apple-system",
-        "BlinkMacSystemFont",
-        '"Segoe UI"',
-        "Roboto",
-        '"Helvetica Neue"',
-        "Arial",
-        "sans-serif",
-        '"Apple Color Emoji"',
-        '"Segoe UI Emoji"',
-        '"Segoe UI Symbol"',
-    ].join(","),
-    "&:hover": {
-        color: "#40a9ff",
-        opacity: 1,
-    },
-    "&.Mui-selected": {
-        color: "#1890ff",
-    },
-    "&.Mui-focusVisible": {
-        backgroundColor: "#d1eaff",
-    },
-}));
-
 function App() {
+    // Estados principales
     const [newPhrase, setNewPhrase] = useState<Phrase>(INITIAL_STATE);
     const [phrases, setPhrases] = useState<Phrase[]>(mockPhrases);
     const [query, setQuery] = useState("");
-    const [tabValue, setTabValue] = useState(0);
-    const [visiblePhrases, setVisiblePhrases] = useState(4);
-    const [isResetting, setIsResetting] = useState(false); // 🔥 Evita carga automática al resetear
+    const [tabValue, setTabValue] = useState(1);
+    const [visiblePhrases, setVisiblePhrases] = useState(3);
+    const [isResetting, setIsResetting] = useState(false);
+
+    // Refs para manejar scroll y focos
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
+    const topRef = useRef<HTMLDivElement>(null);
+    const phraseInputRef = useRef<HTMLInputElement>(null);
 
-    const fuse = useMemo(() => new Fuse(phrases, options), [phrases]);
+    // Creamos el índice de Fuse cuando cambia la lista de frases
+    const fuse = useMemo(() => new Fuse(phrases, fuseOptions), [phrases]);
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-        setNewPhrase({ ...newPhrase, phrase: e.target.value });
-    };
-
-    const handleChangeTab = (event: React.SyntheticEvent, newValue: number) => {
-        setTabValue(newValue);
+    // Al cambiar de tab, si es "Crear", enfocamos el input y reiniciamos frase y query.
+    useEffect(() => {
+        if (tabValue === 0 && phraseInputRef.current) {
+            phraseInputRef.current.focus();
+        }
         setNewPhrase(INITIAL_STATE);
         setQuery("");
-    };
+    }, [tabValue]);
 
-    const handleAddPhrase = () => {
-        if (!newPhrase.phrase) return;
-        const objNewPhrase = { ...newPhrase, id: phrases.length + 1 };
-        setPhrases([...phrases, objNewPhrase]);
+    // Handler para actualizar la nueva frase
+    const handlePhraseChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            setNewPhrase((prev) => ({ ...prev, phrase: e.target.value }));
+        },
+        []
+    );
+
+    // Agregar nueva frase
+    const handleAddPhrase = useCallback(() => {
+        if (!newPhrase.phrase.trim()) return;
+        const newId = phrases.length
+            ? Math.max(...phrases.map((p) => p.id)) + 1
+            : 1;
+        const newEntry = { ...newPhrase, id: newId };
+        setPhrases((prev) => [...prev, newEntry]);
         setNewPhrase(INITIAL_STATE);
-    };
+    }, [newPhrase, phrases]);
 
-    const handleDeletePhrase = (id: number) => {
-        setPhrases(phrases.filter((phrase) => phrase.id !== id));
-    };
+    // Eliminar frase
+    const handleDeletePhrase = useCallback((id: number) => {
+        setPhrases((prev) => prev.filter((phrase) => phrase.id !== id));
+    }, []);
 
-    const handleFavoritePhrase = (id: number) => {
-        setPhrases(
-            phrases.map((phrase) =>
+    // Alternar favorito
+    const handleFavoritePhrase = useCallback((id: number) => {
+        setPhrases((prev) =>
+            prev.map((phrase) =>
                 phrase.id === id
                     ? { ...phrase, isFavorite: !phrase.isFavorite }
                     : phrase
             )
         );
-    };
+    }, []);
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setQuery(e.target.value);
-        setVisiblePhrases(4);
-    };
+    // Actualizar query y reiniciar número de frases visibles
+    const handleSearch = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            setQuery(e.target.value);
+            setVisiblePhrases(3);
+        },
+        []
+    );
 
-    const results = query
-        ? fuse
-              .search(query)
-              .map((res) => res.item)
-              .sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite))
-        : [...phrases].sort(
-              (a, b) => Number(b.isFavorite) - Number(a.isFavorite)
-          );
+    // Calculamos los resultados según el query y luego los ordenamos
+    const results = useMemo(() => {
+        const baseList = query
+            ? fuse.search(query).map((res) => res.item)
+            : [...phrases];
 
-    const visibleResults = results.slice(0, visiblePhrases);
+        return baseList.sort((a, b) => {
+            // Si uno es favorito y el otro no, el favorito va primero.
+            if (a.isFavorite && !b.isFavorite) return -1;
+            if (!a.isFavorite && b.isFavorite) return 1;
+            // Si ambos son del mismo grupo, se ordenan por id descendiente.
+            return b.id - a.id;
+        });
+    }, [query, fuse, phrases]);
 
+    const visibleResults = useMemo(
+        () => results.slice(0, visiblePhrases),
+        [results, visiblePhrases]
+    );
+
+    // Observer para cargar más frases
     useEffect(() => {
         if (!loadMoreRef.current || isResetting) return;
 
@@ -135,73 +126,99 @@ function App() {
         );
 
         observer.observe(loadMoreRef.current);
-
         return () => observer.disconnect();
     }, [visiblePhrases, results.length, isResetting]);
 
+    // Handler para "Mostrar menos"
+    const handleShowLess = () => {
+        setIsResetting(true);
+        setVisiblePhrases(3);
+        // Pequeño retardo para que el DOM se actualice antes del scroll
+        setTimeout(() => {
+            topRef.current?.scrollIntoView({ behavior: "smooth" });
+            setTimeout(() => setIsResetting(false), 1000);
+        }, 50);
+    };
+
+    // Handler para el botón flotante
+    const handleFloatingButtonClick = () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => phraseInputRef.current?.focus(), 300);
+        setTabValue(0);
+    };
+
     return (
-        <main className="h-full w-full min-w-[400px] flex flex-col items-center gap-[3rem] p-8">
+        <main className="h-full w-full flex flex-col items-center max-sm:gap-[1rem] sm:gap-[3rem] text-center max-sm:!p-6 sm:p-8">
+            <div ref={topRef} />
             <div className="flex flex-col items-center gap-4">
                 <h1 className="flex items-center justify-center max-sm:text-2xl max-md:text-3xl max-lg:text-4xl lg:text-5xl">
                     Bienvenido a la biblioteca de frases!
                 </h1>
-                <AntTabs
-                    className="w-fit"
-                    value={tabValue}
-                    onChange={handleChangeTab}
-                    aria-label="ant example"
-                >
-                    <AntTab label="Crear" />
-                    <AntTab label="Buscar" />
-                </AntTabs>
             </div>
-            {tabValue ? (
+            {tabValue === 0 ? (
+                <div
+                    className="w-full max-w-[900px]"
+                    onBlur={() => setTabValue(1)}
+                >
+                    <CreatePhrase
+                        newPhrase={newPhrase}
+                        handleAddPhrase={handleAddPhrase}
+                        handleChange={handlePhraseChange}
+                        inputRef={phraseInputRef}
+                    />
+                </div>
+            ) : (
                 <RoundedTextField
                     className="w-full max-w-[900px]"
                     type="text"
                     value={query}
                     onChange={handleSearch}
-                    placeholder="Buscar en la frase..."
-                />
-            ) : (
-                <CreatePhrase
-                    newPhrase={newPhrase}
-                    handleAddPhrase={handleAddPhrase}
-                    handleChange={handleChange}
+                    placeholder="Buscar en las frases"
                 />
             )}
-
-            <section className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4">
-                {visibleResults.map((phrase, index) => (
-                    <CardPhrase
-                        key={index}
-                        phrase={phrase}
-                        handleFavoritePhrase={handleFavoritePhrase}
-                        handleDeletePhrase={handleDeletePhrase}
-                    />
-                ))}
-            </section>
-
-            {visiblePhrases < results.length ? (
-                <div
-                    ref={loadMoreRef}
-                    className="h-10 w-full text-center p-4 flex items-center justify-center"
-                >
-                    Cargando más frases...
-                </div>
+            {visibleResults.length === 0 ? (
+                <p className="text-lg"> {query ? "No se encontraron frases" : "Aun no hay frases"} </p>
             ) : (
-                <Button
-                    variant="text"
-                    onClick={() => {
-                        setIsResetting(true); // 🚀 Bloquea la carga infinita momentáneamente
-                        setVisiblePhrases(4); // 🔥 Reinicia las frases visibles
-                        window.scrollTo({ top: 0, behavior: "smooth" }); // 🔥 Hace scroll al inicio
-                        setTimeout(() => setIsResetting(false), 1000); // ⏳ Reactiva después de 1s
-                    }}
-                >
-                    Mostrar menos
-                </Button>
+                <>
+                    <section className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {visibleResults.map((phrase) => (
+                            <CardPhrase
+                                key={phrase.id}
+                                phrase={phrase}
+                                handleFavoritePhrase={handleFavoritePhrase}
+                                handleDeletePhrase={handleDeletePhrase}
+                            />
+                        ))}
+                    </section>
+                    {visiblePhrases < results.length ? (
+                        <div
+                            ref={loadMoreRef}
+                            className="h-10 w-full text-center p-4 flex items-center justify-center"
+                        >
+                            Cargando más frases...
+                        </div>
+                    ) : (
+                        <Button
+                            className={
+                                visibleResults.length === 0 ? "!hidden" : ""
+                            }
+                            variant="text"
+                            onClick={handleShowLess}
+                        >
+                            Mostrar menos
+                        </Button>
+                    )}
+                </>
             )}
+
+            <Tooltip title="Crear frase" placement="left" arrow>
+                <button
+                    className="fixed w-16 h-16 max-xs:bg-red-600 items-center justify-center bottom-4 right-4 bg-[#6FC5D2] active:bg-[#467A82] hover:bg-[#467A82] cursor-pointer active:scale-95 select-none text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-300"
+                    onClick={handleFloatingButtonClick}
+                >
+                    <BorderColorIcon />
+                </button>
+            </Tooltip>
         </main>
     );
 }

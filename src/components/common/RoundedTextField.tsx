@@ -1,21 +1,17 @@
 import { TextField, TextFieldProps } from "@mui/material";
+import React, { useState } from "react";
 
-import React from "react";
-
-const sxTextfield = {
+const baseSxTextfield = {
   "& .MuiOutlinedInput-root": {
-    minHeight: "56px",
-    maxHeight: "100px",
     borderRadius: "30px",
-
-    '& .MuiOutlinedInput-input:-webkit-autofill': { // Especifica para Chrome y otros navegadores basados en WebKit
-      WebkitBoxShadow: '0 0 0 100px #FFFFFF inset', // Cambia el color #FFFFFF al color de fondo deseado
-      WebkitTextFillColor: '#000', // Cambia #000 al color del texto deseado
+    // Estilos para autofill en navegadores basados en WebKit
+    '& .MuiOutlinedInput-input:-webkit-autofill': {
+      WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
+      WebkitTextFillColor: "#000",
     },
-    '& .MuiOutlinedInput-input:-webkit-autofill:focus': { // Especifica para el estado de enfoque
-      WebkitBoxShadow: '0 0 0 100px #FFFFFF inset', // Asegúrate de coincidir con el color de fondo no enfocado
+    '& .MuiOutlinedInput-input:-webkit-autofill:focus': {
+      WebkitBoxShadow: "0 0 0 100px #FFFFFF inset",
     },
-
     "& fieldset": {
       borderColor: "#cbcbcb",
     },
@@ -25,6 +21,8 @@ const sxTextfield = {
     "&.Mui-focused fieldset": {
       borderColor: "#6FC5D2",
     },
+    // Transición para suavizar el cambio de altura
+    transition: "min-height 0.3s ease, max-height 0.3s ease",
   },
   "& .MuiInput-underline:after": {
     borderBottomColor: "#6FC5D2",
@@ -32,25 +30,61 @@ const sxTextfield = {
   "& .MuiOutlinedInput-notchedOutline legend": {
     marginLeft: "10px",
   },
+  // Transición para el área de texto multilinea
+  "& .MuiInputBase-inputMultiline": {
+    transition: "height 0.3s ease",
+  },
 };
 
 const RoundedTextField: React.FC<TextFieldProps> = (props) => {
-  const sx = {
-    ...sxTextfield,
-    ...props.sx,
+  const { multiline, onFocus, onBlur, sx: sxProp, ...otherProps } = props;
+  const isMultiline = Boolean(multiline);
+
+  // Estado para controlar si el campo está enfocado (solo usado en modo multiline)
+  const [focused, setFocused] = useState(false);
+
+  // Si es multiline aplicamos estilos dinámicos para cambiar la altura según el foco
+  const dynamicSxTextfield = isMultiline
+    ? {
+        ...baseSxTextfield,
+        "& .MuiOutlinedInput-root": {
+          ...baseSxTextfield["& .MuiOutlinedInput-root"],
+          minHeight: focused ? "100px" : "56px",
+          maxHeight: focused ? "100px" : "56px",
+        },
+        ...sxProp,
+      }
+    : {
+        ...baseSxTextfield,
+        ...sxProp,
+      };
+
+  // Manejadores de foco y desenfoque. Se actualiza el estado solo si es multiline
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (isMultiline) {
+      setFocused(true);
+    }
+    if (onFocus) {
+      onFocus(e);
+    }
   };
 
-  const InputLabelPropsReceived = {
-    ...props.InputLabelProps,
-    shrink: true,
-    style: { ...props.InputLabelProps?.style, left: "10px" },
-}
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (isMultiline) {
+      setFocused(false);
+    }
+    if (onBlur) {
+      onBlur(e);
+    }
+  };
 
   return (
     <TextField
-      {...props}
-      sx={sx}
-      InputLabelProps={InputLabelPropsReceived}
+      {...otherProps}
+      {...(isMultiline ? { multiline: true, rows: focused ? 3 : 1 } : {})}
+      sx={dynamicSxTextfield}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
     />
   );
 };
