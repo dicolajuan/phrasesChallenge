@@ -1,50 +1,75 @@
-# React + TypeScript + Vite
+# Phrases Challenge
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este proyecto es una aplicación web realizada con **React** (utilizando **Vite**) que permite agregar frases, buscarlas y gestionarlas, incluyendo la posibilidad de marcarlas como favoritas. Se basa en un esquema de tarjetas (cards) y cuenta con **infinite scroll** para la carga progresiva de más frases.
 
-Currently, two official plugins are available:
+## Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. **Agregar Frases**  
+   - Se pueden ingresar nuevas frases que serán mostradas como tarjetas en una matriz.
 
-## Expanding the ESLint configuration
+2. **Búsqueda de Frases**  
+   - Se incluye una barra de búsqueda en tiempo real usando la librería [FUSE](https://fusejs.io/), la cual permite filtrar rápidamente las tarjetas que contengan el texto ingresado.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+3. **Eliminar Frases**  
+   - Cualquier frase puede ser eliminada, lo que removerá su tarjeta de la visualización.
 
-- Configure the top-level `parserOptions` property like this:
+4. **Favoritos y Ordenamiento**  
+   - Las frases se pueden marcar como favoritas, ubicándolas primero, seguidas de las frases más recientes.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+5. **Infinite Scroll**  
+   - Las tarjetas se cargan de manera progresiva a medida que se hace scroll, mejorando la experiencia de usuario en la navegación.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+6. **UI/Estilos**  
+   - Se usan **MUI** y **Tailwind CSS** para el diseño de la interfaz y componentes.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## Tecnologías Utilizadas
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+- **React** + **Vite** para la construcción de la aplicación.
+- **MUI** y **Tailwind CSS** para el diseño de la interfaz y componentes.
+- **FUSE** para la búsqueda y filtrado de frases.
+- **Docker** para la creación y despliegue de la imagen de la aplicación.
+
+## Requisitos Previos
+
+- [Docker](https://www.docker.com/) instalado en tu sistema.
+
+## Pasos para Ejecutar la Aplicación
+
+1. **Clona este repositorio** (o descarga los archivos):
+
+   ```bash
+   git clone https://github.com/dicolajuan/phrasesChallenge
+   cd phrasesChallenge
+   ```
+
+2. **Construye la imagen de Docker**:
+   
+   ```bash
+   docker build . -t "phrases-challenge:v1.0"
+   ```
+
+3. **Ejecuta el contenedor**:
+
+   ```bash
+   docker run -p 8080:8080 phrases-challenge:v1.0
+   ```
+
+4. **Accede a la aplicación**:
+   - Abre tu navegador y ve a http://localhost:8080 para ver la aplicación en ejecución.
+
+## Uso de la Aplicación
+
+### Agregar Frase
+En la parte superior (o donde se muestre el formulario), ingresa la frase que desees y haz clic en “Agregar”. Aparecerá una nueva tarjeta en la matriz.
+
+### Buscar
+En la barra de búsqueda, escribe el texto que quieras filtrar. La aplicación irá mostrando únicamente las tarjetas que coincidan con lo que vas tecleando, gracias a la librería [FUSE](https://fusejs.io/).
+
+### Marcar como Favorito
+En cada tarjeta, tendrás la opción de marcar la frase como favorita. Una vez marcada, se ubicará antes que las no favoritas, ordenándose a continuación por las más recientes.
+
+### Eliminar
+En cada tarjeta también encontrarás un botón o ícono para eliminar esa frase definitivamente.
+
+### Scroll Infinito
+A medida que hagas scroll, se irán mostrando más tarjetas, lo que permite manejar grandes cantidades de frases sin sobrecargar la interfaz.
