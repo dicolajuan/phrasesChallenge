@@ -29,6 +29,14 @@ Este proyecto es una aplicación web realizada con **React** (utilizando **Vite*
 - **FUSE** para la búsqueda y filtrado de frases.
 - **Docker** para la creación y despliegue de la imagen de la aplicación.
 
+## Tecnologías para Testing
+
+- **Jest:** Como test runner y framework de aserciones.
+- **ts-jest:** Para integrar Jest con TypeScript.
+- **React Testing Library:** Para testear componentes desde la perspectiva del usuario.
+- **@testing-library/jest-dom:** Para aserciones extendidas (por ejemplo, `.toBeInTheDocument()`).
+- **@testing-library/user-event:** Para simular interacciones del usuario de forma realista.
+
 ## Requisitos Previos
 
 - [Docker](https://www.docker.com/) instalado en tu sistema.
@@ -99,7 +107,7 @@ A medida que hagas scroll, se irán mostrando más tarjetas, lo que permite mane
 
 Si todos los tests pasan, verás un reporte de Jest confirmando que la suite se ejecutó correctamente.
 
-### Opción 1: Ejecutar los tests en un contenedor temporal
+### Opción 2: Ejecutar los tests en un contenedor temporal
 
 1. **Clona este repositorio** (o descarga los archivos):
 
