@@ -73,3 +73,57 @@ En cada tarjeta también encontrarás un botón o ícono para eliminar esa frase
 
 ### Scroll Infinito
 A medida que hagas scroll, se irán mostrando más tarjetas, lo que permite manejar grandes cantidades de frases sin sobrecargar la interfaz.
+
+## Ejecución de Tests
+
+### Opción 1: Ejecutar los tests en tu máquina local
+
+1. **Clona este repositorio** (o descarga los archivos):
+
+   ```bash
+   git clone https://github.com/dicolajuan/phrasesChallenge
+   cd phrasesChallenge
+   ```
+
+2. **Instala las dependencias usando Yarn:**
+   
+   ```bash
+   yarn install
+   ```
+
+3. **Ejecuta los tests:**
+   
+   ```bash
+   yarn test
+   ```
+
+Si todos los tests pasan, verás un reporte de Jest confirmando que la suite se ejecutó correctamente.
+
+### Opción 1: Ejecutar los tests en un contenedor temporal
+
+1. **Clona este repositorio** (o descarga los archivos):
+
+   ```bash
+   git clone https://github.com/dicolajuan/phrasesChallenge
+   cd phrasesChallenge
+   ```
+
+2. **Ejecuta el siguiente comando para correr los tests en un contenedor temporal:**
+   
+   ***Si se ejecuta en un ambiente linux o Mac se debe usar***
+   ```bash
+      docker run --rm \
+     -v "$(pwd)":/app \
+     -w /app \
+     node:18-alpine \
+     sh -c "yarn install && yarn test"
+   ```
+
+   ***Si se ejecuta en powershell se debe utilizar***
+   ```bash
+      docker run --rm `
+     -v "$(pwd)":/app `
+     -w /app `
+     node:18-alpine `
+     sh -c "yarn install && yarn test"
+   ```
