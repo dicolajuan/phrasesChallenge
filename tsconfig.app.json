@@ -18,6 +18,9 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    "types": ["jest", "node"],
+
+    "esModuleInterop": true,
 
     /* Linting */
     "strict": true,
@@ -26,5 +29,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src","tests"]
 }

@@ -13,6 +13,9 @@
     "moduleDetection": "force",
     "noEmit": true,
 
+    "types": ["jest", "node"],
+    "esModuleInterop": true,
+    
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,

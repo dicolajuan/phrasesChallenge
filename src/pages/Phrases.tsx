@@ -221,6 +221,7 @@ export const Phrases = () => {
                             }
                             variant="text"
                             onClick={handleShowLess}
+                            data-testid="show-less"
                         >
                             Mostrar menos
                         </Button>
@@ -228,10 +229,11 @@ export const Phrases = () => {
                 </>
             )}
 
-            <Tooltip title="Crear frase" placement="left" arrow>
+            <Tooltip title="Crear frase" placement="left" arrow >
                 <button
                     className="fixed w-16 h-16 max-xs:bg-red-600 items-center justify-center bottom-4 right-4 bg-[#6FC5D2] active:bg-[#467A82] hover:bg-[#467A82] cursor-pointer active:scale-95 select-none text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-300"
                     onClick={handleFloatingButtonClick}
+                    data-testid="floating-button"
                 >
                     <BorderColorIcon />
                 </button>
