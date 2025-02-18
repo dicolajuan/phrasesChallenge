@@ -21,6 +21,20 @@ Este proyecto es una aplicación web realizada con **React** (utilizando **Vite*
 
 6. **UI/Estilos**  
    - Se usan **MUI** y **Tailwind CSS** para el diseño de la interfaz y componentes.
+  
+7. **API Externa**  
+   - Se usa un JSON generator para simular una API externa para consumir las frases al iniciar.
+
+8. **Patrones**  
+   - Se utilizó el patron de Factory para el logger, dependiendo el ambiente es el nivel que va a generar los logs. Con esta solucion el dia de mañana podria integrar Sentry facilmente para persistir los logs que se generan en produción.
+   - Se utilizó el patron de Strategy para persistir las frases. En este caso, el dev los persiste en el Session Storage y en prod en el Local Storage. En un futuro se podría cambiar la estrategia utilizada para producción y que lo guarde en una BBDD.
+  
+9. **Estados Globales**  
+   - Se utilizó Context para el manejo de estados globales. Podría utilizarse Redux ToolKit, pero no hacia falta para est aaplicación.
+
+10. **Custom Hook**  
+   - Se implementó un hook personalizado para gestionar la interacción con la capa de servicio encargada de la obtención de datos desde la API. Esta solución contribuye a una estructura de código más limpia, modular y mantenible, mejorando la separación de responsabilidades dentro de la aplicación.
+
 
 ## Tecnologías Utilizadas
 
