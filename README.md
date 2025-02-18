@@ -32,7 +32,7 @@ Este proyecto es una aplicación web realizada con **React** (utilizando **Vite*
 9. **Estados Globales**  
    - Se utilizó Context para el manejo de estados globales. Podría utilizarse Redux ToolKit, pero no hacia falta para est aaplicación.
 
-10. **Custom Hook**  
+   10. **Custom Hook**  
       - Se implementó un hook personalizado para gestionar la interacción con la capa de servicio encargada de la obtención de datos desde la API. Esta solución contribuye a una estructura de código más limpia, modular y mantenible, mejorando la separación de responsabilidades dentro de la aplicación.
 
 ## Tecnologías Utilizadas
