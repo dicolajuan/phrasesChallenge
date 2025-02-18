@@ -1,15 +1,26 @@
-import { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import {
+    useMemo,
+    useState,
+    useEffect,
+    useRef,
+    useCallback,
+} from "react";
 import Fuse from "fuse.js";
-import { Button, Tooltip } from "@mui/material";
+import { Tooltip } from "@mui/material";
 import BorderColorIcon from "@mui/icons-material/BorderColor";
-import { CreatePhrase, RoundedTextField, CardPhrase } from "@/components";
+import {
+    CreatePhrase,
+    PhrasesContent,
+    RoundedTextField,
+} from "@/components";
 import { Phrase } from "@/interface";
-import { mockPhrases } from "@/utilities";
+import { usePhrases } from "@/context/PhrasesContext";
 
 const INITIAL_STATE: Phrase = {
     id: 0,
     phrase: "",
     isFavorite: false,
+    creationDate: new Date().toISOString(),
 };
 
 const fuseOptions = {
@@ -20,26 +31,31 @@ const fuseOptions = {
 };
 
 const countVisibles = (width: number) => {
-    if(width >= 1024 ) return 9;
-    if(width >= 760 ) return 6;
-    if(width >= 640 ) return 4;
+    if (width >= 1024) return 9;
+    if (width >= 760) return 6;
+    if (width >= 640) return 4;
     return 3;
-}
+};
 
 export const Phrases = () => {
+    const {
+        phrases,
+        isLoading,
+        addPhrase,
+        deletePhrase: handleDeletePhrase,
+        toggleFavorite: handleFavoritePhrase,
+    } = usePhrases();
 
     const width = window.innerWidth;
 
     // Estados principales
     const [newPhrase, setNewPhrase] = useState<Phrase>(INITIAL_STATE);
-    const [phrases, setPhrases] = useState<Phrase[]>(mockPhrases);
-    const [query, setQuery] = useState("");
-    const [tabValue, setTabValue] = useState(1);
-    const [visiblePhrases, setVisiblePhrases] = useState(countVisibles(width));
-    const [isResetting, setIsResetting] = useState(false);
-
-    
-
+    const [uiState, setUiState] = useState({
+        query: "",
+        tabValue: 1,
+        visiblePhrases: countVisibles(width),
+        isResetting: false,
+    });
 
     // Refs para manejar scroll y focos
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -51,12 +67,12 @@ export const Phrases = () => {
 
     // Al cambiar de tab, si es "Crear", enfocamos el input y reiniciamos frase y query.
     useEffect(() => {
-        if (tabValue === 0 && phraseInputRef.current) {
+        if (uiState.tabValue === 0 && phraseInputRef.current) {
             phraseInputRef.current.focus();
         }
         setNewPhrase(INITIAL_STATE);
-        setQuery("");
-    }, [tabValue]);
+        setUiState((prev) => ({ ...prev, query: "" }));
+    }, [uiState.tabValue]);
 
     // Handler para actualizar la nueva frase
     const handlePhraseChange = useCallback(
@@ -73,39 +89,27 @@ export const Phrases = () => {
             ? Math.max(...phrases.map((p) => p.id)) + 1
             : 1;
         const newEntry = { ...newPhrase, id: newId };
-        setPhrases((prev) => [...prev, newEntry]);
+        addPhrase(newEntry);
+        // setPhrases((prev) => [...prev, newEntry]);
         setNewPhrase(INITIAL_STATE);
     }, [newPhrase, phrases]);
-
-    // Eliminar frase
-    const handleDeletePhrase = useCallback((id: number) => {
-        setPhrases((prev) => prev.filter((phrase) => phrase.id !== id));
-    }, []);
-
-    // Alternar favorito
-    const handleFavoritePhrase = useCallback((id: number) => {
-        setPhrases((prev) =>
-            prev.map((phrase) =>
-                phrase.id === id
-                    ? { ...phrase, isFavorite: !phrase.isFavorite }
-                    : phrase
-            )
-        );
-    }, []);
 
     // Actualizar query y reiniciar número de frases visibles
     const handleSearch = useCallback(
         (e: React.ChangeEvent<HTMLInputElement>) => {
-            setQuery(e.target.value);
-            setVisiblePhrases(countVisibles(width));
+            setUiState((prev) => ({ ...prev, query: e.target.value }));
+            setUiState((prev) => ({
+                ...prev,
+                visiblePhrases: countVisibles(width),
+            }));
         },
         []
     );
 
     // Calculamos los resultados según el query y luego los ordenamos
     const results = useMemo(() => {
-        const baseList = query
-            ? fuse.search(query).map((res) => res.item)
+        const baseList = uiState.query
+            ? fuse.search(uiState.query).map((res) => res.item)
             : [...phrases];
 
         return baseList.sort((a, b) => {
@@ -115,22 +119,25 @@ export const Phrases = () => {
             // Si ambos son del mismo grupo, se ordenan por id descendiente.
             return b.id - a.id;
         });
-    }, [query, fuse, phrases]);
+    }, [uiState.query, fuse, phrases]);
 
     const visibleResults = useMemo(
-        () => results.slice(0, visiblePhrases),
-        [results, visiblePhrases]
+        () => results.slice(0, uiState.visiblePhrases),
+        [results, uiState.visiblePhrases]
     );
 
     // Observer para cargar más frases
     useEffect(() => {
-        if (!loadMoreRef.current || isResetting) return;
+        if (!loadMoreRef.current || uiState.isResetting) return;
 
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
                     setTimeout(() => {
-                        setVisiblePhrases((prev) => prev + 3);
+                        setUiState((prev) => ({
+                            ...prev,
+                            visiblePhrases: prev.visiblePhrases + 3,
+                        }));
                     }, 1000);
                 }
             },
@@ -139,16 +146,22 @@ export const Phrases = () => {
 
         observer.observe(loadMoreRef.current);
         return () => observer.disconnect();
-    }, [visiblePhrases, results.length, isResetting]);
+    }, [uiState.visiblePhrases, results.length, uiState.isResetting]);
 
     // Handler para "Mostrar menos"
     const handleShowLess = () => {
-        setIsResetting(true);
-        setVisiblePhrases(countVisibles(width));
+        setUiState((prev) => ({ ...prev, isResetting: true }));
+        setUiState((prev) => ({
+            ...prev,
+            visiblePhrases: countVisibles(width),
+        }));
         // Pequeño retardo para que el DOM se actualice antes del scroll
         setTimeout(() => {
             topRef.current?.scrollIntoView({ behavior: "smooth" });
-            setTimeout(() => setIsResetting(false), 1000);
+            setTimeout(
+                () => setUiState((prev) => ({ ...prev, isResetting: false })),
+                1000
+            );
         }, 50);
     };
 
@@ -156,7 +169,7 @@ export const Phrases = () => {
     const handleFloatingButtonClick = () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
         setTimeout(() => phraseInputRef.current?.focus(), 300);
-        setTabValue(0);
+        setUiState((prev) => ({ ...prev, tabValue: 0 }));
     };
 
     return (
@@ -167,10 +180,12 @@ export const Phrases = () => {
                     Bienvenido a la biblioteca de frases!
                 </h1>
             </div>
-            {tabValue === 0 ? (
+            {uiState.tabValue === 0 ? (
                 <div
                     className="w-full max-w-[900px]"
-                    onBlur={() => setTabValue(1)}
+                    onBlur={() =>
+                        setUiState((prev) => ({ ...prev, tabValue: 1 }))
+                    }
                 >
                     <CreatePhrase
                         newPhrase={newPhrase}
@@ -183,53 +198,24 @@ export const Phrases = () => {
                 <RoundedTextField
                     className="w-full max-w-[900px]"
                     type="text"
-                    value={query}
+                    value={uiState.query}
                     onChange={handleSearch}
                     placeholder="Buscar en las frases"
                 />
             )}
-            {visibleResults.length === 0 ? (
-                <p className="text-lg">
-                    {" "}
-                    {query
-                        ? "No se encontraron frases"
-                        : "Aun no hay frases"}{" "}
-                </p>
-            ) : (
-                <>
-                    <section className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {visibleResults.map((phrase) => (
-                            <CardPhrase
-                                key={phrase.id}
-                                phrase={phrase}
-                                handleFavoritePhrase={handleFavoritePhrase}
-                                handleDeletePhrase={handleDeletePhrase}
-                            />
-                        ))}
-                    </section>
-                    {visiblePhrases < results.length ? (
-                        <div
-                            ref={loadMoreRef}
-                            className="h-10 w-full text-center p-4 flex items-center justify-center"
-                        >
-                            Cargando más frases...
-                        </div>
-                    ) : (
-                        <Button
-                            className={
-                                visibleResults.length === 0 ? "!hidden" : ""
-                            }
-                            variant="text"
-                            onClick={handleShowLess}
-                            data-testid="show-less"
-                        >
-                            Mostrar menos
-                        </Button>
-                    )}
-                </>
-            )}
 
-            <Tooltip title="Crear frase" placement="left" arrow >
+            <PhrasesContent
+                visibleResults={visibleResults}
+                results={results}
+                uiState={uiState}
+                isLoading={isLoading}
+                handleFavoritePhrase={handleFavoritePhrase}
+                handleDeletePhrase={handleDeletePhrase}
+                handleShowLess={handleShowLess}
+                loadMoreRef={loadMoreRef}
+            />
+
+            <Tooltip title="Crear frase" placement="left" arrow>
                 <button
                     className="fixed w-16 h-16 max-xs:bg-red-600 items-center justify-center bottom-4 right-4 bg-[#6FC5D2] active:bg-[#467A82] hover:bg-[#467A82] cursor-pointer active:scale-95 select-none text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-300"
                     onClick={handleFloatingButtonClick}

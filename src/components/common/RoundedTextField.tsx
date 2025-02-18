@@ -36,7 +36,7 @@ const baseSxTextfield = {
   },
 };
 
-const RoundedTextField: React.FC<TextFieldProps> = (props) => {
+export const RoundedTextField: React.FC<TextFieldProps> = (props) => {
   const { multiline, onFocus, onBlur, sx: sxProp, ...otherProps } = props;
   const isMultiline = Boolean(multiline);
 
@@ -88,5 +88,3 @@ const RoundedTextField: React.FC<TextFieldProps> = (props) => {
     />
   );
 };
-
-export default RoundedTextField;

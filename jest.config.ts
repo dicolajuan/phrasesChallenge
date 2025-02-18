@@ -3,23 +3,28 @@ import type { Config } from "jest";
 const config: Config = {
     // Indica a Jest que use ts-jest como preset para compilar TypeScript
     preset: "ts-jest",
-    // Indica a Jest que use el DOM como entorno de prueba (por ejemplo para Testing Library)
-    testEnvironment: "jest-environment-jsdom",
+
+    // Indica a Jest que use jsdom como entorno de prueba (para pruebas con React Testing Library)
+    testEnvironment: "jsdom",
+
+    // 📌 🔹 Asegura que Jest cargue `jest.setup.ts` antes de ejecutar las pruebas
+    setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
 
     // Opcional: define patrones para encontrar tus archivos de test
     testMatch: ["**/__tests__/**/*.test.ts?(x)", "**/?(*.)+(spec|test).ts?(x)"],
 
-    // Opcional: define directorios o archivos a ignorar en las pruebas
+    // Ignorar node_modules y dist para mejorar rendimiento
     testPathIgnorePatterns: ["/node_modules/", "/dist/"],
 
-    // Opcional: indica qué extensiones de archivo manejará Jest
+    // Extensiones de archivo que Jest manejará
     moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 
-    // Opcional: config para mapear alias si usas paths de TypeScript (tsconfig paths)
-      moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/src/$1',
-      },
+    // Configuración para mapear alias si usas paths de TypeScript
+    moduleNameMapper: {
+        "^@/(.*)$": "<rootDir>/src/$1",
+    },
 
+    // Transforma archivos TypeScript usando ts-jest y tsconfig.app.json
     transform: {
         "^.+\\.tsx?$": [
             "ts-jest",
@@ -29,10 +34,11 @@ const config: Config = {
         ],
     },
 
-    // Opcional: para limpiar los mocks de jest en cada test
+    // Limpia mocks después de cada prueba
     clearMocks: true,
 
-    // Otros ajustes adicionales según tus necesidades...
+    // Aumenta el tiempo de espera para pruebas async si algunas demoran demasiado
+    testTimeout: 30000,  // (Opcional) Ajusta según tus necesidades
 };
 
 export default config;
