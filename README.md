@@ -54,7 +54,7 @@ Este proyecto es una aplicación web realizada con **React** (utilizando **Vite*
 
 - [Docker](https://www.docker.com/) instalado en tu sistema.
 
-## Pasos para Ejecutar la Aplicación
+## Pasos para Ejecutar la Aplicación con Docker
 
 1. **Clona este repositorio** (o descarga los archivos):
 
@@ -76,6 +76,54 @@ Este proyecto es una aplicación web realizada con **React** (utilizando **Vite*
    ```
 
 4. **Accede a la aplicación**:
+   - Abre tu navegador y ve a http://localhost:8080 para ver la aplicación en ejecución.
+
+## Pasos para Ejecutar la Aplicación local
+
+1. **Clona este repositorio** (o descarga los archivos):
+
+   ```bash
+   git clone https://github.com/dicolajuan/phrasesChallenge
+   cd phrasesChallenge
+   ```
+
+2. **Instala las dependencias**:
+
+   Con yarn
+   ```bash
+   yarn
+   ```
+
+   Con NPM
+   ```bash
+   npm install
+   ```
+
+4. **Crea el build**:
+
+   Con yarn
+   ```bash
+   yarn build
+   ```
+
+   Con NPM
+   ```bash
+   npm run build
+   ```
+
+5. **Levanta la aplicacón**:
+
+   Con yarn
+   ```bash
+   yarn preview
+   ```
+
+   Con NPM
+   ```bash
+   npm run preview
+   ```
+
+6. **Accede a la aplicación**:
    - Abre tu navegador y ve a http://localhost:8080 para ver la aplicación en ejecución.
 
 ## Uso de la Aplicación
